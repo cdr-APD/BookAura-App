@@ -90,7 +90,7 @@ fun HomeScreen(modifier: Modifier = Modifier){
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "For You",
+                    text = "For You ",
                     color = Color.White,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
