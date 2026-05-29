@@ -1,9 +1,5 @@
 package com.example.booklibrary.ui.components
-
-import android.R.attr.label
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Explore
@@ -18,19 +14,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.example.booklibrary.ui.navigation.Screen
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 data class BottomNavItem(
     val label: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val route: String
 )
 @Composable
-fun BottomNavBar(){
+fun BottomNavBar(
+    navController: NavHostController
+){
     val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home),
-        BottomNavItem("Explore", Icons.Default.Explore),
-        BottomNavItem("Saved", Icons.Default.Bookmark),
-        BottomNavItem("Profile", Icons.Default.Person)
+        BottomNavItem(
+            "Home",
+            Icons.Default.Home,
+            Screen.Home.route
+        ),
+
+        BottomNavItem(
+            "Explore",
+            Icons.Default.Explore,
+            Screen.Explore.route
+        ),
+
+        BottomNavItem(
+            "Saved",
+            Icons.Default.Bookmark,
+            Screen.Saved.route
+        ),
+
+        BottomNavItem(
+            "Profile",
+            Icons.Default.Person,
+            Screen.Profile.route
+        )
     )
+
+    val navBackStackEntry =
+        navController.currentBackStackEntryAsState()
+
+    val currentRoute =
+        navBackStackEntry.value?.destination?.route
+
     NavigationBar(
         containerColor = Color(0xFF1B1E2F),
         tonalElevation = 0.dp
@@ -38,8 +66,14 @@ fun BottomNavBar(){
         items.forEachIndexed { index, item ->
 
             NavigationBarItem(
-                selected = index == 0,
-                onClick = { },
+                selected = currentRoute == item.route,
+                onClick = {
+                    navController.navigate(item.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 icon = {
                     Icon(
                         imageVector = item.icon,

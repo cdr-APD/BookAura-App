@@ -40,8 +40,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.unit.Dp
+import com.example.booklibrary.ui.components.SectionTitle
+
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier){
+fun HomeScreen(bottomPadding: Dp = 0.dp){
     val books = listOf(
         Book(R.drawable.primal_hunter_1, "Primal Hunter", "Fantasy", 4.8f),
         Book(R.drawable.atomic_habits, "Atomic Habits", "Self Help", 4.7f),
@@ -64,16 +67,20 @@ fun HomeScreen(modifier: Modifier = Modifier){
     ){
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
+                .padding(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = 50.dp,
+                    bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ){
             item(
                 span = { GridItemSpan(2) }
             ){
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(50.dp))
                 GreetingSection()
             }
 
@@ -89,12 +96,7 @@ fun HomeScreen(modifier: Modifier = Modifier){
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "For You ",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                SectionTitle("For You")
             }
             items(books) { book ->
 
