@@ -15,8 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.booklibrary.ui.navigation.Screen
+import com.example.booklibrary.navigation.Screen
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.booklibrary.ui.theme.BottomNavBackground
+import com.example.booklibrary.ui.theme.BrandPurple
 
 data class BottomNavItem(
     val label: String,
@@ -60,7 +62,7 @@ fun BottomNavBar(
         navBackStackEntry.value?.destination?.route
 
     NavigationBar(
-        containerColor = Color(0xFF1B1E2F),
+        containerColor = BottomNavBackground,
         tonalElevation = 0.dp
     ) {
         items.forEachIndexed { index, item ->
@@ -84,8 +86,8 @@ fun BottomNavBar(
                     Text(text = item.label)
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFF7C4DFF),
-                    selectedTextColor = Color(0xFF7C4DFF),
+                    selectedIconColor = BrandPurple,
+                    selectedTextColor = BrandPurple,
                     unselectedIconColor = Color.Gray,
                     unselectedTextColor = Color.Gray,
                     indicatorColor = Color.Transparent

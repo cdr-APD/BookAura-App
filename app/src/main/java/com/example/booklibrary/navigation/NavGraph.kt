@@ -1,6 +1,6 @@
-package com.example.booklibrary.ui.navigation
+package com.example.booklibrary.navigation
+
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -10,6 +10,7 @@ import com.example.booklibrary.ui.screens.ExploreScreen
 import com.example.booklibrary.ui.screens.HomeScreen
 import com.example.booklibrary.ui.screens.ProfileScreen
 import com.example.booklibrary.ui.screens.SavedScreen
+import com.example.booklibrary.viewmodel.BookViewModel
 
 sealed class Screen(val route: String){
     object Home : Screen("home")
@@ -21,6 +22,7 @@ sealed class Screen(val route: String){
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    viewModel: BookViewModel,
     bottomPadding: Dp = 0.dp
 ){
     NavHost(
@@ -28,16 +30,16 @@ fun NavGraph(
         startDestination = Screen.Home.route
     ){
         composable(Screen.Home.route){
-            HomeScreen(bottomPadding)
+            HomeScreen(viewModel = viewModel, bottomPadding = bottomPadding)
         }
         composable(Screen.Explore.route){
-            ExploreScreen(bottomPadding)
+            ExploreScreen(viewModel = viewModel, bottomPadding = bottomPadding)
         }
         composable(Screen.Saved.route){
-            SavedScreen()
+            SavedScreen(viewModel = viewModel, bottomPadding = bottomPadding)
         }
         composable(Screen.Profile.route){
-            ProfileScreen()
+            ProfileScreen(viewModel = viewModel, bottomPadding = bottomPadding)
         }
     }
 }

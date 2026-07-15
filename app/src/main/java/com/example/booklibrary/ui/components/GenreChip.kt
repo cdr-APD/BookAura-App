@@ -8,9 +8,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.booklibrary.ui.theme.BorderDark
+import com.example.booklibrary.ui.theme.BrandPurple
+import com.example.booklibrary.ui.theme.CardBackground
+import com.example.booklibrary.ui.theme.TextPrimary
 
 @Composable
 fun GenreChip(
@@ -18,24 +22,18 @@ fun GenreChip(
     isSelected: Boolean = false,
     onClick: () -> Unit = {}
 ){
+    val shape = RoundedCornerShape(18.dp)
     Text(
         text = genre,
         modifier = Modifier
-            .background(
-                color = if(isSelected)
-                    Color(0xFF7C4DFF)
-                else
-                    Color(0xFF1E2235),
-                shape = RoundedCornerShape(18.dp)
-            )
             .border(
                 width = 1.dp,
-                color = if(isSelected)
-                    Color(0xFF7C4DFF)
-                else
-                    Color(0xFF2E334A),
-
-                shape = RoundedCornerShape(18.dp)
+                color = if(isSelected) BrandPurple else BorderDark,
+                shape = shape
+            )
+            .clip(shape)
+            .background(
+                color = if(isSelected) BrandPurple else CardBackground
             )
             .clickable {
                 onClick()
@@ -44,7 +42,7 @@ fun GenreChip(
                 horizontal = 18.dp,
                 vertical = 12.dp
             ),
-        color = Color.White,
+        color = TextPrimary,
         fontWeight = FontWeight.Medium
     )
 }

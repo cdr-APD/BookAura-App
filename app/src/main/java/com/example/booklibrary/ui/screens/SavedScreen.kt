@@ -8,16 +8,32 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.booklibrary.R
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.booklibrary.ui.components.SavedBookCard
 import com.example.booklibrary.ui.components.SectionTitle
+import com.example.booklibrary.ui.theme.BackgroundDarkCenter
+import com.example.booklibrary.ui.theme.BackgroundDarkEnd
+import com.example.booklibrary.ui.theme.BackgroundDarkStart
+import com.example.booklibrary.ui.theme.TextPrimary
+import com.example.booklibrary.ui.theme.TextSecondary
+import com.example.booklibrary.viewmodel.BookViewModel
 
 @Composable
-fun SavedScreen() {
+fun SavedScreen(
+    viewModel: BookViewModel,
+    bottomPadding: Dp = 0.dp
+) {
+    val savedBooks by viewModel.savedBooks.collectAsStateWithLifecycle()
+    val currentlyReading by viewModel.currentlyReading.collectAsStateWithLifecycle()
+    val unreadCollection by viewModel.unreadCollection.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -25,116 +41,124 @@ fun SavedScreen() {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0F111D),
-                        Color(0xFF1A1B2F),
-                        Color(0xFF121212)
+                        BackgroundDarkStart,
+                        BackgroundDarkCenter,
+                        BackgroundDarkEnd
                     )
                 )
             )
     ) {
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
-
-            contentPadding = PaddingValues(
-                bottom = 80.dp
-            ),
-
-            verticalArrangement =
-                Arrangement.spacedBy(18.dp)
-        ){
-
-            item {
-
-                Spacer(modifier = Modifier.height(60.dp))
-
-                SectionTitle("Saved Books")
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Your personal collection",
-                    color = Color(0xFFB0B0B0),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        if (savedBooks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No saved books yet",
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Explore books and bookmark your favorites to build your collection.",
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp),
+                contentPadding = PaddingValues(
+                    top = 20.dp,
+                    bottom = bottomPadding + 20.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(40.dp))
+                    SectionTitle("Saved Books")
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Your personal collection",
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
 
-            // CURRENTLY READING
-            item {
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionTitle("Currently Reading")
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyRow(
-                    horizontalArrangement =
-                        Arrangement.spacedBy(16.dp)
-                ) {
-
+                // CURRENTLY READING
+                if (currentlyReading.isNotEmpty()) {
                     item {
-
-                        SavedBookCard(
-                            modifier = Modifier.width(200.dp),
-
-                            imageRes = R.drawable.primal_hunter_1,
-                            title = "Primal Hunter",
-                            genre = "Fantasy",
-                            rating = 4.8f,
-                            currentChapter = 12,
-                            totalChapter = 200
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        SectionTitle("Currently Reading")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(currentlyReading, key = { it.id }) { book ->
+                                SavedBookCard(
+                                    modifier = Modifier.width(200.dp),
+                                    book = book,
+                                    onBookmarkClick = {
+                                        viewModel.toggleSaved(book.id)
+                                    }
+                                )
+                            }
+                        }
                     }
+                }
 
+                // UNREAD COLLECTION
+                if (unreadCollection.isNotEmpty()) {
                     item {
-
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SectionTitle("Unread Collection")
+                    }
+                    items(unreadCollection, key = { it.id }) { book ->
                         SavedBookCard(
-                            modifier = Modifier.width(200.dp),
-
-                            imageRes = R.drawable.atomic_habits,
-                            title = "Atomic Habits",
-                            genre = "Self Help",
-                            rating = 4.7f,
-                            currentChapter = 35,
-                            totalChapter = 80
+                            book = book,
+                            onBookmarkClick = {
+                                viewModel.toggleSaved(book.id)
+                            }
                         )
                     }
                 }
-            }
 
-            // UNREAD COLLECTION
-            item {
+                // If saved is not empty, but we have neither in-progress nor unread,
+                // it means all saved books are completed! We can display them here.
+                val completedSaved = savedBooks.filter {
+                    val progress = if (it.totalChapter != null && it.totalChapter > 0) {
+                        (it.currentChapter ?: 0).toFloat() / it.totalChapter.toFloat()
+                    } else 0f
+                    progress >= 1f
+                }
+                if (completedSaved.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SectionTitle("Completed Collection")
+                    }
+                    items(completedSaved, key = { it.id }) { book ->
+                        SavedBookCard(
+                            book = book,
+                            onBookmarkClick = {
+                                viewModel.toggleSaved(book.id)
+                            }
+                        )
+                    }
+                }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                SectionTitle("Unread Collection")
-            }
-
-            item {
-
-                SavedBookCard(
-                    imageRes = R.drawable.deep_work,
-                    title = "Deep Work",
-                    genre = "Productivity",
-                    rating = 4.4f
-                )
-            }
-
-            item {
-
-                SavedBookCard(
-                    imageRes = R.drawable.rich_dad,
-                    title = "Rich Dad Poor Dad",
-                    genre = "Finance",
-                    rating = 4.5f
-                )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
