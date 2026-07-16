@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.example.booklibrary.data.model.Book
 import com.example.booklibrary.ui.theme.BrandPurple
 import com.example.booklibrary.ui.theme.CardBackground
@@ -31,18 +32,21 @@ import com.example.booklibrary.ui.theme.StarRating
 import com.example.booklibrary.ui.theme.TextPrimary
 import com.example.booklibrary.ui.theme.TextSecondary
 
+import androidx.compose.foundation.clickable
+
 @Composable
 fun BookCard(
     book: Book,
     onBookmarkClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCardClick: () -> Unit = {}
 ) {
     val filledStars = book.rating.toInt()
     val emptyStars = 5 - filledStars
     val stars = "★".repeat(filledStars) + "☆".repeat(emptyStars)
 
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onCardClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = CardBackground
@@ -56,8 +60,20 @@ fun BookCard(
                     .fillMaxWidth()
                     .aspectRatio(0.70f)
             ) {
+                val painter = if (!book.imageUrl.isNullOrEmpty()) {
+                    rememberAsyncImagePainter(
+                        model = book.imageUrl.replace("http://", "https://"),
+                        placeholder = painterResource(id = com.example.booklibrary.R.drawable.primal_hunter_1),
+                        error = painterResource(id = com.example.booklibrary.R.drawable.primal_hunter_1)
+                    )
+                } else if (book.imageRes > 0) {
+                    painterResource(id = book.imageRes)
+                } else {
+                    painterResource(id = com.example.booklibrary.R.drawable.primal_hunter_1)
+                }
+
                 Image(
-                    painter = painterResource(id = book.imageRes),
+                    painter = painter,
                     contentDescription = book.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.ButtonDefaults
@@ -17,6 +18,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +34,8 @@ import com.example.booklibrary.ui.components.GenreChip
 import com.example.booklibrary.ui.components.SearchBar
 import com.example.booklibrary.ui.components.SectionTitle
 import com.example.booklibrary.ui.state.BookSortOption
+import com.example.booklibrary.ui.state.ExploreSearchState
+import com.example.booklibrary.ui.state.ExploreUiState
 import com.example.booklibrary.ui.theme.BackgroundDarkCenter
 import com.example.booklibrary.ui.theme.BackgroundDarkEnd
 import com.example.booklibrary.ui.theme.BackgroundDarkStart
@@ -38,14 +43,15 @@ import com.example.booklibrary.ui.theme.BrandPurple
 import com.example.booklibrary.ui.theme.CardBackground
 import com.example.booklibrary.ui.theme.TextPrimary
 import com.example.booklibrary.ui.theme.TextSecondary
-import com.example.booklibrary.viewmodel.BookViewModel
+import com.example.booklibrary.viewmodel.ExploreViewModel
 
 @Composable
 fun ExploreScreen(
-    viewModel: BookViewModel,
-    bottomPadding: Dp = 0.dp
+    viewModel: ExploreViewModel,
+    bottomPadding: Dp = 0.dp,
+    onBookClick: (String) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.exploreUiState.collectAsStateWithLifecycle()
 
     val genres = listOf(
         "All",
@@ -188,39 +194,141 @@ fun ExploreScreen(
                 }
             }
 
-            if (uiState.books.isEmpty()) {
-                item(span = { GridItemSpan(2) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "No books found",
-                                color = TextPrimary,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Try adjusting your search query or genre filter.",
-                                color = TextSecondary,
-                                style = MaterialTheme.typography.bodyMedium
+            when (val searchState = uiState.searchState) {
+                is ExploreSearchState.Empty -> {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 60.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Search millions of books",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Text(
+                                    text = "Try searching:",
+                                    color = TextSecondary,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                
+                                Spacer(modifier = Modifier.height(12.dp))
+                                
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val suggestions = listOf("Harry Potter", "Atomic Habits", "Clean Code")
+                                    suggestions.forEach { suggestion ->
+                                        SuggestionChip(
+                                            onClick = { viewModel.setSearchQuery(suggestion) },
+                                            label = { Text(text = suggestion, color = TextPrimary) },
+                                            border = SuggestionChipDefaults.suggestionChipBorder(
+                                                enabled = true,
+                                                borderColor = BrandPurple.copy(alpha = 0.5f)
+                                            ),
+                                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                                containerColor = CardBackground
+                                            ),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                is ExploreSearchState.Loading -> {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 80.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                color = BrandPurple
                             )
                         }
                     }
                 }
-            } else {
-                items(uiState.books, key = { it.id }) { book ->
-                    BookCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        book = book,
-                        onBookmarkClick = {
-                            viewModel.toggleSaved(book.id)
+                is ExploreSearchState.Error -> {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Oops! Something went wrong",
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = searchState.message,
+                                    color = TextSecondary,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+                            }
                         }
-                    )
+                    }
+                }
+                is ExploreSearchState.Success -> {
+                    if (searchState.books.isEmpty()) {
+                        item(span = { GridItemSpan(2) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "No books found",
+                                        color = TextPrimary,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Try adjusting your search query or genre filter.",
+                                        color = TextSecondary,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        items(searchState.books, key = { it.id }) { book ->
+                            BookCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                book = book,
+                                onBookmarkClick = {
+                                    viewModel.toggleExploreSaved(book.id)
+                                },
+                                onCardClick = {
+                                    onBookClick(book.id)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
